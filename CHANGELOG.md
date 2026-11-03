@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.6.0
+
+0.6.0 adds home-automation primitives and changes the `Tone` and `KitIconSet` contracts; the compiler reports every site that must change.
+
+- **Breaking:** `Tone` gains `information`. `KitBadge` and the new `KitChipButton` map it to the `information-subtle` fill and `information` edge. Rust code that matches `Tone` exhaustively must add the `Tone::Information` arm; the compiler reports each site.
+- **Breaking:** `KitIconSet` gains `delete`, the backspace glyph of the keypad's delete key. The shipped themes fill it with Lucide `delete`; a hand-built theme must add it.
+- `KitCheckbox`, `KitSwitch`, `KitRadioGroup`, `KitSegmentedControl` and `KitToggleGroup` now set `accessible-checkable`, so native screen readers announce their checked state; before, the AccessKit adapter dropped it.
+- Add `KitChipButton`, a pressable status, filter or shortcut chip with a label, an optional `glyph: IconGlyph`, a `tone: Tone` and a host-owned `selected` state. A selected chip takes its tone's subtle fill and edge, a strong edge and a semibold label, so selection never rests on colour alone. `token` and `generation` identify the row: `activate(int, int)` reports the identity the press started on, and a press is cancelled when either changes. A `checkable` chip (the default) is announced as pressed or not pressed; a shortcut chip clears `checkable`. A static chip may handle the inherited `activated()` instead, which replaces the identity report. The chip follows `control-size`; a touch host raises `min-height` to its target.
+- Add `direction: ChoiceDirection` and `presentation: SliderPresentation` (`line`, `filled`) to `KitSlider`, named like the direction of the radio group, toggle group and segmented control. A vertical slider puts the minimum at the bottom; Up and Right step forward, Down and Left step back. A filled slider paints the whole control as its track with a strong edge and a bar handle, and its minimum thickness is twelve spacing units in either direction. Its default paints (a solid accent fill on the pressed track, an on-accent handle) keep the value at least 3:1 against the track and the page in both themes. `track-brush`, `fill-brush` and `handle-brush` accept injected paints, such as a hue or color-temperature gradient. `accessible-orientation` follows the direction.
+- Add `direction: ChoiceDirection` to `KitSegmentedControl`. Vertical segments stack in source order and navigate with Up and Down; `flow` applies only to the horizontal direction.
+- Add `KitKeypad`, a numeric keypad (1 to 9, then delete, 0 and confirm) that emits `digit(int)`, `delete-requested()` (remove the last digit) and `confirm()` and never holds the entered digits. While `access` is editable, typed 0 to 9 and Backspace reach the same callbacks whenever a key or the keypad has focus. Return confirms on the keypad; Return and Space first activate a key that shows keyboard focus, as on any button. A key pressed with the pointer hands focus back to the keypad without a ring, so Return after tapped digits confirms. `can-confirm` gates confirm, and a held Return confirms once. Each key is at least twelve spacing units square and grows with enlarged text. `digit-labels`, `delete-label`, `delete-glyph` (by default `theme.icons.delete`), `confirm-label`, `confirm-glyph` and `confirm-intent` customize the keys.
+- Add `KitCodeIndicator`, one mark per expected digit with the first `filled` marks filled and a host-supplied accessible `label`; it shows how many digits are entered, never which.
+
 ## 0.5.1
 
 - Document project-relative `@kit` library paths for VS Code and Zed, including locked Cargo vendoring for crates.io consumers, local checkout paths and refresh instructions.

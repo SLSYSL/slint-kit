@@ -788,5 +788,7 @@ mod phone;
 mod product_style;
 
 mod calendar_qa;
+mod choice_presentation;
+mod keypad;
 mod otp_field;
 mod qa_polish;
