@@ -17,6 +17,12 @@ export default function (eleventyConfig) {
   eleventyConfig.addGlobalData('lucide', lucide);
   eleventyConfig.addFilter('iconSnippet', (name, mode, locale) => iconSnippet(name, mode, locale === 'fr'));
   eleventyConfig.addPassthroughCopy('src/assets');
+  const webVitalsVersion = JSON.parse(fs.readFileSync('node_modules/web-vitals/package.json', 'utf8')).version;
+  const webVitals = Buffer.from(`/*! web-vitals ${webVitalsVersion} | Copyright 2020 Google LLC | Apache-2.0 | /assets/vendor/web-vitals-LICENSE.txt */\n` + fs.readFileSync('node_modules/web-vitals/dist/web-vitals.js', 'utf8'));
+  const webVitalsHash = createHash('sha256').update(webVitals).digest('hex').slice(0, 16);
+  const webVitalsUrl = `/assets/versioned/web-vitals.${webVitalsHash}.js`;
+  eleventyConfig.addGlobalData('webVitalsUrl', webVitalsUrl);
+  eleventyConfig.addPassthroughCopy({'node_modules/web-vitals/LICENSE':'assets/vendor/web-vitals-LICENSE.txt'});
   if (fs.existsSync('.generated/workspace-preview/manifest.json')) { eleventyConfig.addPassthroughCopy({ '.generated/workspace-preview': 'assets/workspace-preview' }); }
   eleventyConfig.addPassthroughCopy({ 'src/_redirects': '_redirects' });
   eleventyConfig.addPassthroughCopy({ 'src/_headers': '_headers' });
@@ -60,6 +66,9 @@ export default function (eleventyConfig) {
     return versionedAssets.get(key).url;
   });
   eleventyConfig.on('eleventy.after', () => {
+    const webVitalsTarget = path.join(outputDirectory, webVitalsUrl.slice(1));
+    fs.mkdirSync(path.dirname(webVitalsTarget), {recursive:true});
+    fs.writeFileSync(webVitalsTarget, webVitals);
     const spriteTarget = path.join(outputDirectory, lucide.url.slice(1));
     fs.mkdirSync(path.dirname(spriteTarget), { recursive: true });
     fs.writeFileSync(spriteTarget, lucide.sprite);

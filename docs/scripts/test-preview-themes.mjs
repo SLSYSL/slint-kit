@@ -24,6 +24,8 @@ function environment({saved = null, search = '', dark = false, french = false, b
   const values = new Map(saved === null ? [] : [[storageKey, saved]]);
   const location = {origin:'https://slint-kit.test', pathname:'/preview/', search};
   const window = new Element();
+  const analytics = [];
+  window.slintKitAnalytics = {track:(name, values) => analytics.push({name, values})};
   const media = new Map();
   const context = {
     window, location, URLSearchParams, console,
@@ -39,7 +41,7 @@ function environment({saved = null, search = '', dark = false, french = false, b
   };
   window.matchMedia = context.matchMedia;
   context.document = {documentElement:{lang:french ? 'fr' : 'en', dataset:{}}};
-  return {context, values, window, media};
+  return {context, values, window, media, analytics};
 }
 function page(options) {
   const state = environment(options);
@@ -152,4 +154,28 @@ test('a stale theme acknowledgement cannot replace the latest loading choice', (
   state.message({type:'slint-kit-preview',state:'ready',theme:'dark',width:520,height:344});
   assert.equal(choice.value,'light');
   assert.equal(state.frames[0].messages.at(-1).data.theme,'light');
+});
+
+test('preview measurements count readiness once per launch and reject unrelated frames', () => {
+  const state = page();
+  state.elements['.run-preview'].emit('click');
+  const ready = {type:'slint-kit-preview',state:'ready',width:520,height:344};
+  state.message(ready, {}, 'https://other.test');
+  assert.equal(state.analytics.filter(e => e.name === 'preview_ready').length, 0);
+  state.message(ready); state.message(ready); state.message(ready);
+  assert.equal(state.analytics.filter(e => e.name === 'preview_ready').length, 1);
+  assert(state.analytics.find(e => e.name === 'preview_ready').values.value >= 0);
+  state.elements['.run-preview'].emit('click');
+  state.elements['.run-preview'].emit('click'); state.message(ready);
+  assert.equal(state.analytics.filter(e => e.name === 'preview_start').length, 2);
+  assert.equal(state.analytics.filter(e => e.name === 'preview_ready').length, 2);
+});
+
+test('preview canvas measurements ignore synthetic events and count the first real interaction', async () => {
+  const state = await shell();
+  const canvas = state.elements.canvas;
+  canvas.emit('pointerdown', {isTrusted:false});
+  assert.equal(state.messages.filter(e => e.state === 'interaction').length, 0);
+  canvas.emit('pointerdown', {isTrusted:true}); canvas.emit('keydown', {isTrusted:true});
+  assert.equal(state.messages.filter(e => e.state === 'interaction').length, 1);
 });
