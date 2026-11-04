@@ -56,7 +56,9 @@ cargo run --release --locked -p kit-showcase
 
 ## Contribute
 
-Pull requests follow the design and type rules in [AGENTS.md](AGENTS.md) and update the English and French documentation with the change. Run `cargo run -p xtask --locked -- check` before submitting.
+Slint Kit is still young and changing quickly. The priority is to reach a stable foundation as soon as possible, so we aren't accepting external contributions or pull requests for now. Coordinating and reviewing them at this stage would slow that work.
+
+Thank you for wanting to contribute. [Issues](https://github.com/damione1/slint-kit/issues) and [discussions](https://github.com/damione1/slint-kit/discussions) are welcome for bug reports, questions and feedback. We'll reopen contributions once the kit reaches the level of stability we're aiming for.
 
 ## License
 
