@@ -65,7 +65,8 @@ jobs:
     needs: consumers
     if: ${{ always() && !cancelled() && needs.consumers.result != 'failure' && needs.consumers.result != 'cancelled' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    # Cold documentation capture builds can exceed two hours.
+    timeout-minutes: 360
     env:
       DOCS_BUILD_MODE: ${{ inputs.mode }}
       DOCS_RELEASE_VERSION: ${{ inputs.version }}
