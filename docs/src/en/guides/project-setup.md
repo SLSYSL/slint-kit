@@ -55,6 +55,8 @@ fn main() {
 
 The build package registers the kit's shared Slint types and verifies their contracts. Use the public root import `@kit` for components, enums and structs. Additional font and icon files retain their documented imports. Configure the [editor](/guides/editor/) separately so its language server can resolve these imports too.
 
+On Windows, use Slint Kit 0.7.1 or later: 0.7.0 incorrectly escaped canonical source paths in its generated import. Both `compile` and `compile_with_config` accept relative, absolute and canonical paths, including spaces and Unicode. For custom settings, pass a configuration from `slint_kit_build::config()` or `config_with_libraries(...)` to `compile_with_config`; application include paths and library aliases are preserved.
+
 ## Import, set properties, receive values
 
 Create `ui/app.slint`:

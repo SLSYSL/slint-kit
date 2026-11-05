@@ -43,7 +43,7 @@ fn main() {
 }
 ```
 
-For custom Slint compiler configuration, start with `slint_kit_build::config()` and preserve its library paths. A minimal `ui/app.slint`:
+On Windows, require Slint Kit 0.7.1 or later: 0.7.0 incorrectly escapes canonical source paths. Both build helpers accept relative, absolute and canonical paths, including spaces and Unicode. For custom Slint compiler configuration, start with `slint_kit_build::config()` and pass it to `compile_with_config`; application include paths and library aliases are preserved. A minimal `ui/app.slint`:
 
 ```slint
 import { KitButton, KitTextField } from "@kit";

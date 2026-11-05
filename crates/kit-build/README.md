@@ -17,6 +17,8 @@ fn main() {
 
 Use [`slint-kit`](https://crates.io/crates/slint-kit) in application dependencies. Rust 1.92 or later and Slint 1.18.1 are required. For custom compiler configuration, start with `slint_kit_build::config()` and pass the result to `slint_kit_build::compile_with_config(path, config)`. Preserve its library paths; calling the low-level Slint compiler directly does not add the window service exports.
 
+Windows requires 0.7.1 or later; 0.7.0 incorrectly escapes canonical source paths. The helpers accept relative, absolute and canonical paths, including spaces and Unicode, while preserving application include paths and library aliases. Paths containing quotes or line breaks cannot be represented in a Slint import and return a diagnostic.
+
 ## Editor imports
 
 The Slint language server does not read `build.rs`. For a crates.io consumer, run `cargo vendor --locked target/slint-editor/vendor` from the application workspace root, then configure VS Code's `slint.libraryPaths` with `{"kit": "target/slint-editor/vendor/slint-kit-slint/ui"}`, or pass `-L kit=target/slint-editor/vendor/slint-kit-slint/ui` to `slint-lsp` in Zed. These paths assume one kit version and Cargo's default vendor directory naming. Vendoring copies all remote dependencies; rerun it after updating the lockfile or cleaning `target/`.
@@ -40,6 +42,8 @@ slint_kit_build::compile_with_config("ui/app.slint", config)
 Slint Kit épingle Slint **1.18.1** et active sa compilation expérimentale de modules dans le paquet build. Composants, structs, enums et globals passent par l’unique point d’entrée `@kit` ; les imports supplémentaires de polices/icônes conservent leurs chemins. Gardez la dépendance runtime nommée `slint-kit` pour résoudre `slint_kit::ui`. `compile` fournit les globals nécessaires à `slint_kit::install` sans liste d’exports par composant dans l’application.
 
 Pour personnaliser le compilateur, partez de `config()` puis appelez `compile_with_config(path, config)` : les chemins de bibliothèques et exports de services restent configurés. L’appel direct au compilateur Slint de bas niveau n’ajoute pas ces exports.
+
+Sous Windows, utilisez la 0.7.1 ou une version ultérieure ; la 0.7.0 échappait incorrectement les chemins canonicalisés. Les helpers acceptent les chemins relatifs, absolus et canonicalisés, avec espaces et Unicode, en conservant les chemins d’inclusion et alias de bibliothèques. Les chemins contenant des guillemets ou sauts de ligne ne sont pas représentables dans un import Slint et renvoient un diagnostic.
 
 La fonctionnalité expérimentale reste isolée dans ce paquet. Si une version amont la retire, le repli de compatibilité est un point d’entrée Slint généré qui réexporte l’application et les contrats du kit, avec une liaison Rust typée incluse par `SLINT_INCLUDE_GENERATED`. Ce repli préserve le contrat public import/propriétés/callback et `install` par fenêtre ; il s’agit d’une stratégie de migration, pas d’un autre backend activé dans le paquet 1.18.1 actuel.
 

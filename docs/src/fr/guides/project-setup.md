@@ -55,6 +55,8 @@ fn main() {
 
 Le paquet de compilation enregistre les types Slint partagés du kit et vérifie leurs contrats. Utilisez l’import public racine `@kit` pour les composants, enums et structs. Les fichiers de polices et d’icônes supplémentaires gardent leurs imports documentés. Configurez l’[éditeur](/fr/guides/editor/) séparément pour que son serveur de langage résolve également ces imports.
 
+Sous Windows, utilisez Slint Kit 0.7.1 ou une version ultérieure : la 0.7.0 échappait incorrectement les chemins canonicalisés dans l’import généré. `compile` et `compile_with_config` acceptent les chemins relatifs, absolus et canonicalisés, avec espaces et Unicode. Pour personnaliser la compilation, transmettez une configuration issue de `slint_kit_build::config()` ou de `config_with_libraries(...)` à `compile_with_config` ; les chemins d’inclusion et les alias de bibliothèques de l’application sont conservés.
+
 ## Importer, définir les propriétés, recevoir les valeurs
 
 Créez `ui/app.slint` :
