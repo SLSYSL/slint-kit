@@ -3,7 +3,6 @@
 """Plan and capture only changed scenes through the actual browser previews."""
 import argparse
 from enum import StrEnum
-import importlib.util
 import json
 import math
 import os
@@ -13,7 +12,6 @@ import struct
 import subprocess
 
 from doc_inputs import DOCS, ROOT, build_inputs, digest, key_for, runtime_inputs, write_changed, write_json, consumer_identity, compiler_environment
-from presentation import themed_source
 
 
 class SceneKind(StrEnum):
@@ -57,8 +55,9 @@ MANIFEST = DOCS / 'content/render-captures.json'
 PROFILE = {'slint': '1.18.1', 'density': 2, 'format': 1, 'reducedMotion': True}
 BROWSER_PROFILE = {'backend': 'browser', 'renderer': 'femtovg', 'pipeline': 1,
                    'captureDriverSha256': digest((DOCS / 'scripts/capture-browser.mjs').read_bytes()),
+                   'bundleBuilder': digest((DOCS / 'scripts/build-web-previews.py').read_bytes()),
                    'browserHost': {name: digest((DOCS / 'preview' / name).read_bytes())
-                                   for name in ('build.rs', 'src/lib.rs')}}
+                                   for name in ('build.rs', 'src/lib.rs', 'loader.js')}}
 COMPILER_FLAGS = {name: value for name, value in compiler_environment().items()
                   if name in ('RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS')
                   or name.startswith(('CARGO_PROFILE_RELEASE_', 'CARGO_TARGET_WASM32_'))}
@@ -153,14 +152,17 @@ def tasks(inputs):
         source = DOCS / 'quickstart' / slug
         ui = (source / 'ui/app.slint').read_text()
         activation = poster_activation(entries[slug].get('posterActivation'))
-        recipe = {**PROFILE, 'reducedMotion': False, 'theme': 'tailwind', 'locale': 'en', 'textScale': 1,
-                  'activation': activation, 'viewport': [int(re.search(r'preferred-width:\s*(\d+)px', ui)[1]),
-                                                         int(re.search(r'preferred-height:\s*(\d+)px', ui)[1])]}
         driver = {**shared, 'consumer': consumer_identity(slug), 'host': digest((source / 'src/main.rs').read_bytes()),
                   'build': digest((source / 'build.rs').read_bytes())}
-        result.append({'id': f'starter:{slug}', 'kind': SceneKind.STARTER, 'slug': slug, 'recipe': recipe,
-                       'outputs': [source / 'preview@2x.png', source / 'preview.png'],
-                       'key': key_for(f'starter:{slug}:tailwind', inputs, recipe, driver)})
+        for theme in ('light', 'dark'):
+            recipe = {**PROFILE, 'reducedMotion': False, 'theme': theme, 'locale': 'en', 'textScale': 1,
+                      'activation': activation, 'viewport': [int(re.search(r'preferred-width:\s*(\d+)px', ui)[1]),
+                                                             int(re.search(r'preferred-height:\s*(\d+)px', ui)[1])]}
+            suffix = '-dark' if theme == 'dark' else ''
+            result.append({'id': f'starter:{slug}' + (':dark' if theme == 'dark' else ''),
+                           'kind': SceneKind.STARTER, 'slug': slug, 'recipe': recipe,
+                           'outputs': [source / f'preview{suffix}@2x.png', source / f'preview{suffix}.png'],
+                           'key': key_for(f'starter:{slug}:tailwind', inputs, recipe, driver)})
     for task in result:
         task['sceneKey'] = task['key']
         task['key'] = digest({'scene': task['sceneKey'], 'profile': BROWSER_PROFILE})
@@ -174,7 +176,8 @@ def read_manifest():
 def browser_scene(task, entry):
     scene = {'id': task['id'], 'slug': task['slug'], 'base': entry['base'],
              'output': str(task['outputs'][0].relative_to(ROOT)),
-             'sceneKey': task['sceneKey'], 'key': task['key']}
+             'sceneKey': task['sceneKey'], 'key': task['key'],
+             'kind': task['kind'], 'recipe': task['recipe']}
     activation = poster_activation(task['recipe'].get('activation'))
     if activation is not None:
         scene['activation'] = activation
@@ -274,10 +277,15 @@ def update_legacy(task, record):
         from starter_sources import source_directory, source_files
         source = source_directory(task['slug'])
         width, height = dimensions(task['outputs'][0])
-        captures[task['slug']] = {'environment': {'platform': record['origin']['environment'].get('platform'), 'backend': 'browser', 'renderer': 'femtovg', 'scale_factor': 2},
-                'source_sha256': {name: digest((source / name).read_bytes()) for name in source_files(source)},
-                'image': {'file': 'preview@2x.png', 'sha256': digest(task['outputs'][0].read_bytes()), 'width': width, 'height': height},
-                'renderKey': task['key'], 'theme': 'tailwind'}
+        proof = {'environment': {'platform': record['origin']['environment'].get('platform'), 'backend': 'browser', 'renderer': 'femtovg', 'scale_factor': 2},
+                 'source_sha256': {name: digest((source / name).read_bytes()) for name in source_files(source)},
+                 'image': {'file': task['outputs'][0].name, 'sha256': digest(task['outputs'][0].read_bytes()), 'width': width, 'height': height},
+                 'renderKey': task['key'], 'theme': task['recipe']['theme']}
+        current = captures.setdefault(task['slug'], {})
+        if task['recipe']['theme'] == 'dark':
+            current['dark'] = proof
+        else:
+            captures[task['slug']] = {**proof, **({'dark': current['dark']} if 'dark' in current else {})}
         write_changed(path, json.dumps(captures, indent=2, ensure_ascii=False) + '\n')
         return
     path = DOCS / 'content/captures.json'
@@ -353,6 +361,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['plan', 'update', 'check'])
     parser.add_argument('slugs', nargs='*')
+    parser.add_argument('--reuse-bundle', action='store_true', help='Require an existing verified WASM bundle; never compile one')
     args = parser.parse_args()
     from starter_sources import prepare
     prepare()
@@ -391,17 +400,12 @@ def main():
         write_json(DOCS / '.generated/capture-plan.json', {'pending': [{'id': task['id'], 'key': task['key']} for task in pending]})
         return
     if pending:
-        spec = importlib.util.spec_from_file_location('web_previews_build', DOCS / 'scripts/build-web-previews.py')
-        web = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(web)
-        starter_slugs = sorted({task['slug'] for task in pending if task['kind'] == SceneKind.STARTER})
-        if starter_slugs:
-            subprocess.run(['python3', str(DOCS / 'scripts/build-web-previews.py'), *starter_slugs], cwd=ROOT, check=True)
-        browser_entries = json.loads((DOCS / '.generated/web/manifest.json').read_text())['entries'] if starter_slugs else {}
-        browser_plan = []
-        for task in pending:
-            entry = web.build_fixture(task, inputs) if task['kind'] == SceneKind.CATALOGUE else browser_entries[task['slug']]['tailwind']
-            browser_plan.append(browser_scene(task, entry))
+        # One bundle serves both real starters and every localized catalogue
+        # fixture. Theme, text scale and viewport are runtime scene parameters.
+        subprocess.run(['python3', str(DOCS / 'scripts/build-web-previews.py'),
+                        *(['--package-only'] if args.reuse_bundle else [])], cwd=ROOT, check=True)
+        bundle = json.loads((DOCS / '.generated/web/manifest.json').read_text())['bundle']
+        browser_plan = [browser_scene(task, bundle) for task in pending]
         plan_path = DOCS / '.generated/browser-capture-plan.json'
         write_json(plan_path, browser_plan)
         process = subprocess.run(['node', str(DOCS / 'scripts/capture-browser.mjs'), str(plan_path)], cwd=ROOT)

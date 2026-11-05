@@ -23,7 +23,7 @@ const french = parameters.get('lang') === 'fr';
 document.documentElement.lang = french ? 'fr' : 'en';
 const canvas = document.querySelector('canvas');
 const themeChoice = document.querySelector('#preview-theme');
-const themeStorageKey = 'slint-kit-preview-theme';
+const themeStorageKey = 'slint-kit-theme';
 const isTheme = value => value === 'light' || value === 'dark';
 let runtime;
 let currentTheme = parameters.get('theme');

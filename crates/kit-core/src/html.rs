@@ -1120,3 +1120,132 @@ mod localized_time_tests {
         assert_eq!(rules.sanitize("2026-10-28T01:30 PM"), "2026-10-28T13:30");
     }
 }
+
+impl HtmlConstraints {
+    /// HTML number stepping, on the minimum/default/zero step lattice, using
+    /// exact rationals. A mismatched value first moves to the adjacent valid step.
+    pub fn step_number(
+        &self,
+        draft: &str,
+        direction: crate::StepDirection,
+    ) -> Result<String, crate::ParseIssue> {
+        use crate::ParseIssue;
+        if self.disabled
+            || self.read_only
+            || !matches!(self.kind, HtmlInputKind::Number | HtmlInputKind::Range)
+            || self.step.as_deref() == Some("any")
+        {
+            return Err(ParseIssue::InvalidSyntax);
+        }
+        let step = self
+            .step
+            .as_deref()
+            .and_then(html_number)
+            .filter(|value| value > &BigRational::zero())
+            .unwrap_or_else(|| BigRational::from_integer(1.into()));
+        let minimum = self.minimum.as_deref().and_then(html_number);
+        let maximum = self.maximum.as_deref().and_then(html_number);
+        if minimum
+            .as_ref()
+            .zip(maximum.as_ref())
+            .is_some_and(|(min, max)| min > max)
+        {
+            return Err(ParseIssue::InvalidRange);
+        }
+        let base = minimum
+            .clone()
+            .or_else(|| html_number(&self.default_value))
+            .unwrap_or_else(BigRational::zero);
+        let current = canonical_number_draft(draft, self.number_format)
+            .as_deref()
+            .and_then(html_number)
+            .unwrap_or_else(BigRational::zero);
+        let position = (&current - &base) / &step;
+        let next_index = match direction {
+            crate::StepDirection::Increment => {
+                if position.is_integer() {
+                    position + BigRational::from_integer(1.into())
+                } else {
+                    position.ceil()
+                }
+            }
+            crate::StepDirection::Decrement => {
+                if position.is_integer() {
+                    position - BigRational::from_integer(1.into())
+                } else {
+                    position.floor()
+                }
+            }
+        };
+        let mut next = &base + next_index * &step;
+        if let Some(minimum) = minimum
+            && next < minimum
+        {
+            next = &base + ((minimum - &base) / &step).ceil() * &step;
+        }
+        if let Some(maximum) = maximum
+            && next > maximum
+        {
+            next = &base + ((maximum - &base) / &step).floor() * &step;
+        }
+        if match direction {
+            crate::StepDirection::Increment => next < current,
+            crate::StepDirection::Decrement => next > current,
+        } {
+            return Ok(draft.into());
+        }
+        let mut value = rational_decimal(next);
+        if self.number_format == NumberInputFormat::DecimalComma {
+            value = value.replace('.', ",");
+        }
+        Ok(value)
+    }
+}
+fn rational_decimal(value: BigRational) -> String {
+    use num_traits::Signed;
+    let negative = value.is_negative();
+    let value = value.abs();
+    let denominator = value.denom();
+    let mut remainder = value.numer() % denominator;
+    let mut result = format!("{}{}", if negative { "-" } else { "" }, value.to_integer());
+    if !remainder.is_zero() {
+        result.push('.');
+        while !remainder.is_zero() {
+            remainder *= 10;
+            result.push_str(&(&remainder / denominator).to_string());
+            remainder %= denominator;
+        }
+    }
+    result
+}
+#[cfg(test)]
+mod stepping_tests {
+    use super::*;
+    use crate::StepDirection;
+    #[test]
+    fn exact_number_stepping_aligns_then_respects_bounds() {
+        let rules = HtmlConstraints {
+            kind: HtmlInputKind::Number,
+            minimum: Some("0.1".into()),
+            maximum: Some("0.9".into()),
+            step: Some("0.2".into()),
+            ..Default::default()
+        };
+        assert_eq!(
+            rules.step_number("0.2", StepDirection::Increment).unwrap(),
+            "0.3"
+        );
+        assert_eq!(
+            rules.step_number("0.2", StepDirection::Decrement).unwrap(),
+            "0.1"
+        );
+        assert_eq!(
+            rules.step_number("0.9", StepDirection::Increment).unwrap(),
+            "0.9"
+        );
+        assert_eq!(
+            rules.step_number("0.1", StepDirection::Decrement).unwrap(),
+            "0.1"
+        );
+    }
+}

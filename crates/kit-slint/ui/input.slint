@@ -1,3 +1,5 @@
+import { FieldState, FieldValue, FieldCommit, KitFieldService } from "field-service.slint";
+import { FieldAction, CommitPolicy, Ownership, StepDirection } from "shared-contracts.slint";
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { KitTheme, KitThemes, KitMetrics, TypographyRole, ControlSize, ButtonIntent, ControlWidth, KitThemeContext, FieldRecipe, IconRecipe } from "theme.slint";
 import { KitSpinner } from "feedback.slint";
@@ -19,6 +21,24 @@ export enum TextLengthPolicy { validate, limit }
 // All variants retain this one native TextInput throughout theme, validation,
 // placeholder and reveal changes. Parsing and grapheme counting belong to Rust.
 export component KitTextField inherits KitField {
+    in property <CommitPolicy> commit-policy: CommitPolicy.on-blur;
+    in property <Ownership> ownership: Ownership.local;
+    in property <string> spec-key;
+    out property <FieldState> field-state;
+    out property <string> accepted-text: root.field-state.accepted.text;
+    callback committed(FieldCommit);
+    init => { root.field-state = {accepted: {present: root.text != "", text: root.text}, draft: root.text}; }
+    function reduce-field(action: FieldAction) {
+        if (!KitFieldService.ready || root.access != FieldAccess.editable) { return; }
+        root.field-state = KitFieldService.reduce(root.field-state, action, root.text, checks.constraints, root.commit-policy, root.ownership, root.spec-key);
+        if (action == FieldAction.cancel) { root.text = root.field-state.draft; }
+        if (root.field-state.committed) { root.committed({value: root.field-state.value, constraints: checks.constraints, spec: root.spec-key}); }
+        else if (action != FieldAction.edit && root.field-state.error != "") { root.invalid(); }
+    }
+    public function step-number(direction: StepDirection) { if (KitFieldService.ready && root.access == FieldAccess.editable) { root.text = KitFieldService.step-number(root.text, checks.constraints, direction); root.reduce-field(FieldAction.submit); } }
+    public function commit() { if (root.report-validity()) { root.reduce-field(FieldAction.submit); } }
+    public function acknowledge(value: FieldValue) { root.field-state.accepted = value; }
+
     in property <ControlSize> control-size: ControlSize.medium;
     in property <FieldAccess> access: FieldAccess.editable;
     in property <ValidationPresentation> validation: ValidationPresentation.pristine;
@@ -37,7 +57,7 @@ export component KitTextField inherits KitField {
     in property <NumberInputFormat> number-format: NumberInputFormat.canonical;
     // Custom skins may normalize validation independently of the native draft.
     in property <string> validation-text: root.text;
-    in property <string> display-text: root.text;
+    in property <string> display-text: KitFieldService.ready && root.accepted-text == root.text ? KitFieldService.display(root.spec-key, root.text) : root.text;
     in property <string> intrinsic-error;
     private property <bool> formatted-at-rest: !root.has-focus && root.text != "" && root.display-text != root.text;
     in property <bool> required;
@@ -91,9 +111,9 @@ export component KitTextField inherits KitField {
     public function report-validity() -> bool { let valid = checks.report-validity(); if (!valid) { root.take-focus(); } return valid; }
     public function set-custom-validity(message: string) { root.custom-validity = message; }
     public function reset-validation() { checks.reset-validation(); }
-    public function reset-field() { root.text = root.default-value; root.synchronize-length-limit(); checks.reset-validation(); root.edited(root.text); root.synchronize-length-limit(); }
-    private property <ValidationPresentation> effective-validation: root.validation == ValidationPresentation.invalid || checks.show-error ? ValidationPresentation.invalid : root.validation;
-    private property <string> effective-error: root.intrinsic-error != "" ? checks.validation-message : root.validation == ValidationPresentation.invalid && root.error != "" ? root.error : checks.validation-message;
+    public function reset-field() { root.text = root.default-value; root.field-state = {accepted: {present: root.default-value != "", text: root.default-value}, draft: root.default-value}; root.synchronize-length-limit(); checks.reset-validation(); root.edited(root.text); root.synchronize-length-limit(); }
+    private property <ValidationPresentation> effective-validation: root.validation == ValidationPresentation.invalid || checks.show-error || root.field-state.error != "" ? ValidationPresentation.invalid : root.validation;
+    private property <string> effective-error: !checks.validity.valid ? checks.validation-message : root.field-state.error != "" ? root.field-state.error : root.intrinsic-error != "" ? checks.validation-message : root.validation == ValidationPresentation.invalid && root.error != "" ? root.error : checks.validation-message;
     in-out property <SecretVisibility> secret-visibility: SecretVisibility.hidden;
     in property <TextLineMode> line-mode: TextLineMode.single-line;
     in property <ResizePolicy> resize-policy: ResizePolicy.fixed;
@@ -141,7 +161,7 @@ export component KitTextField inherits KitField {
     public function take-focus() { if (root.access != FieldAccess.disabled) { editor.focus(); } }
     public function select-all() { editor.select-all(); }
     public function copy-selection() { editor.copy(); }
-    public function cancel-edit() { root.cancelled(); }
+    public function cancel-edit() { root.reduce-field(FieldAction.cancel); root.cancelled(); }
     pure function non-finite-number(text: string) -> bool {
         let normalized = text.to-lowercase().replace-all("+", "").replace-all("-", "");
         return normalized == "nan" || normalized == "inf" || normalized == "infinity";
@@ -155,6 +175,7 @@ export component KitTextField inherits KitField {
         } else {
             if (root.focus-generation == KitFormValidation.focus-generation) { KitFormValidation.phone-focused = false; }
             checks.note-blur();
+            root.reduce-field(FieldAction.blur);
             if (root.purpose == TextPurpose.telephone) { viewport.content-x = 0px; }
         }
         root.focus-observed(root.has-focus);
@@ -277,6 +298,7 @@ export component KitTextField inherits KitField {
                         accessible-value: root.input-type == InputType.password || (root.purpose == TextPurpose.password && root.secret-visibility == SecretVisibility.hidden) ? "" : root.formatted-at-rest ? root.display-text : root.text;
                         accessible-description: root.effective-validation == ValidationPresentation.invalid ? root.effective-error : root.description;
                         key-pressed(event) => {
+                            root.reduce-field(FieldAction.edit);
                             root.previous-edit-text = self.text;
                             if (root.purpose == TextPurpose.telephone && KitFormValidation.ready) {
                                 if (((event.modifiers.control || event.modifiers.meta) && !event.modifiers.alt && (event.text == "v" || event.text == "V"))
@@ -345,7 +367,7 @@ export component KitTextField inherits KitField {
                             }
                             root.previous-edit-text = self.text;
                         }
-                        accepted => { if (!root.multiline && root.access == FieldAccess.editable && root.report-validity()) { root.commit-requested(root.purpose == TextPurpose.telephone ? root.value : self.text); } }
+                        accepted => { if (!root.multiline && root.access == FieldAccess.editable && root.report-validity()) { root.reduce-field(FieldAction.submit); root.commit-requested(root.purpose == TextPurpose.telephone ? root.value : self.text); } }
                         // Do not intercept Enter/Escape before the native IME engine.
                         cursor-position-changed(position) => {
                             if (root.multiline) {

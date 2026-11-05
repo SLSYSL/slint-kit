@@ -12,7 +12,7 @@ permalink: "{{ 'guides/themes/' | localeUrl(locale) }}index.html"
 A theme is a `KitTheme` value. Pass it to each composed component; the public defaults are `KitThemes.light` and `KitThemes.dark`. Use the same value for the window background and text colors.
 
 ```slint
-import { KitTheme, KitThemes, KitButton, ControlSize, ControlWidth } from "@kit/kit.slint";
+import { KitTheme, KitThemes, KitButton, ControlSize, ControlWidth } from "@kit";
 
 export component Example inherits Window {
     preferred-width: 420px;
@@ -49,7 +49,7 @@ Each `AlertSeverity` takes its own subtle background, border and mark from the `
 The kit ships one Tailwind-inspired visual system, with light and dark modes. `KitThemes.light` and `.dark` supply its slate surfaces, indigo actions, semantic feedback colors, typography, spacing, focus rings, elevation and Lucide icons. The standard `slint_kit_build::compile("ui/app.slint")` integration registers everything needed for the components.
 
 ```slint
-import { KitThemes, KitThemeContext, KitButton } from "@kit/kit.slint";
+import { KitThemes, KitThemeContext, KitButton } from "@kit";
 
 export component Example inherits Window {
     preferred-width: 420px;
@@ -68,7 +68,7 @@ export component Example inherits Window {
 
 **Inter is an optional font.** Import `{ InterFont } from "@kit/fonts/inter.slint"` and set `default-font-family: InterFont.family` on the window to use it, as the documentation examples do. Without this import, the theme uses the application's font. The four static weights total about 1.6 MB of source files; embedded applications can choose a font appropriate to the device.
 
-For application library aliases, start with `slint_kit_build::config_with_libraries(...)`, then use `slint_build::compile_with_config`. The helper preserves application aliases and reserves `kit`. Component height stays intrinsic: content and padding can require more room than the nominal size.
+For application library aliases, start with `slint_kit_build::config_with_libraries(...)`, then use `slint_kit_build::compile_with_config("ui/app.slint", config)`. The helper preserves application aliases and reserves `kit`. Component height stays intrinsic: content and padding can require more room than the nominal size.
 
 The palette derives from Tailwind CSS under MIT, Inter is under the SIL Open Font License and Lucide carries ISC/MIT notices. Keep the [third-party notices](https://github.com/damione1/slint-kit/blob/main/THIRD-PARTY-NOTICES.md). Shadow support depends on the renderer; borders preserve surface boundaries when shadows are unavailable.
 
@@ -87,7 +87,7 @@ Use the theme for shared identity, `control-size` for density, and local propert
 Composite groups, selects, tabs and menus retain their theme, size and composition contracts; the table does not imply the same local properties exist on every container. Field labels and helper/error messages keep their typography roles rather than inheriting the editor’s `text-size`.
 
 ```slint
-import { KitButton, ButtonIntent, KitThemeContext } from "@kit/kit.slint";
+import { KitButton, ButtonIntent, KitThemeContext } from "@kit";
 import { LucideIcons } from "@kit/icons/lucide/all.slint";
 
 component ExportAction inherits KitButton {
@@ -114,7 +114,7 @@ export component Example inherits Window {
 A local region needs explicit bindings for application-supplied children:
 
 ```slint
-import { KitCard, KitButton, KitThemes } from "@kit/kit.slint";
+import { KitCard, KitButton, KitThemes } from "@kit";
 
 component DarkPanel inherits KitCard {
     theme: KitThemes.dark;
@@ -141,7 +141,7 @@ A neighboring control without an explicit theme still uses the window context. T
 [Browse all Lucide icons and copy their integration](/components/icon/).
 
 ```slint
-import { KitIcon, KitIconButton, IconPurpose } from "@kit/kit.slint";
+import { KitIcon, KitIconButton, IconPurpose } from "@kit";
 import { LucideIcons } from "@kit/icons/lucide/all.slint";
 
 component Toolbar inherits HorizontalLayout {

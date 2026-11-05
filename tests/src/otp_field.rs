@@ -9,7 +9,7 @@ use slint::{
 fn fixture() -> OtpFixture {
     i_slint_backend_testing::init_no_event_loop();
     let app = OtpFixture::new().unwrap();
-    kit_slint::init_form_validation!(ui, app);
+    kit_slint::install(&app);
     app.show().unwrap();
     app.invoke_focus_code();
     app
@@ -391,7 +391,7 @@ fn otp_waits_for_the_constraint_bridge_before_accepting_native_input() {
     app.invoke_focus_code();
     key(&app, "12345678");
     assert_eq!(app.get_text(), "");
-    kit_slint::init_form_validation!(ui, app);
+    kit_slint::install(&app);
     key(&app, "123456");
     key(&app, "78");
     assert_eq!(app.get_text(), "123456");
@@ -575,7 +575,7 @@ fn otp_placeholder_paints_a_complete_digit_in_every_slot_at_200_percent() {
     })))
     .unwrap();
     let app = OtpFixture::new().unwrap();
-    kit_slint::init_form_validation!(ui, app);
+    kit_slint::install(&app);
     app.set_placeholder("888888".into());
     app.show().unwrap();
     app.invoke_blur_code();

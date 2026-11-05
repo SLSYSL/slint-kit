@@ -32,9 +32,30 @@ pub fn config() -> slint_build::CompilerConfiguration {
 }
 
 pub fn compile(path: impl AsRef<Path>) -> Result<(), slint_build::CompileError> {
-    // A stale shared contract is a build error, never a silently incompatible projection.
-    verify_contracts().expect("Slint Kit shared contracts are stale");
-    slint_build::compile_with_config(path, config())
+    compile_with_config(path, config())
+}
+
+/// Compile with additional libraries or presentation settings while preserving
+/// the shared kit identities and automatically exported window services.
+pub fn compile_with_config(
+    path: impl AsRef<Path>,
+    configuration: slint_build::CompilerConfiguration,
+) -> Result<(), slint_build::CompileError> {
+    let diagnostic =
+        |error: std::io::Error| slint_build::CompileError::CompileError(vec![error.to_string()]);
+    verify_contracts().map_err(diagnostic)?;
+    let source = std::fs::canonicalize(path.as_ref()).map_err(diagnostic)?;
+    let source = source.to_str().ok_or_else(|| {
+        slint_build::CompileError::CompileError(vec!["Slint source paths must be UTF-8".into()])
+    })?;
+    let output = std::path::PathBuf::from(
+        std::env::var_os("OUT_DIR").ok_or(slint_build::CompileError::NotRunViaCargo)?,
+    );
+    let wrapper = output.join("kit-app.slint");
+    std::fs::write(&wrapper, format!(
+        "export * from {source:?};\nimport {{ KitFormValidation, KitCalendarService, KitFieldService, KitSelectionService, KitTimeService, KitThemes, KitThemeContext }} from \"@kit\";\nexport {{ KitFormValidation, KitCalendarService, KitFieldService, KitSelectionService, KitTimeService, KitThemes, KitThemeContext }}\n"
+    )).map_err(slint_build::CompileError::SaveError)?;
+    slint_build::compile_with_config(wrapper, configuration)
 }
 
 /// Deterministically renders enums declared once by the pure Rust core.

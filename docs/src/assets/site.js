@@ -1,4 +1,39 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+const siteThemeStorageKey = 'slint-kit-theme';
+const isSiteTheme = value => value === 'light' || value === 'dark';
+const siteThemeChoice = document.querySelector('.site-theme');
+const themeSubscribers = [];
+const readSiteTheme = () => {
+  const requested = new URLSearchParams(location.search).get('theme');
+  if (isSiteTheme(requested)) return requested;
+  try { const saved = localStorage.getItem(siteThemeStorageKey); if (isSiteTheme(saved)) return saved; } catch {}
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+let siteTheme = readSiteTheme();
+const setSiteTheme = (theme, persist = true) => {
+  if (!isSiteTheme(theme)) return;
+  siteTheme = theme;
+  document.documentElement.dataset.theme = theme;
+  if (siteThemeChoice) siteThemeChoice.value = theme;
+  for (const source of document.querySelectorAll('[data-theme-source="dark"]')) source.media = theme === 'dark' ? 'all' : 'not all';
+  if (persist) { try { localStorage.setItem(siteThemeStorageKey, theme); } catch {} }
+  for (const update of themeSubscribers) update(theme);
+  window.dispatchEvent(new CustomEvent('slint-kit-theme-change', {detail:theme}));
+};
+setSiteTheme(siteTheme, false);
+if (siteThemeChoice) {
+  siteThemeChoice.disabled = false;
+  siteThemeChoice.addEventListener('change', () => setSiteTheme(siteThemeChoice.value));
+}
+window.addEventListener('storage', event => {
+  if (event.key === siteThemeStorageKey && isSiteTheme(event.newValue)) setSiteTheme(event.newValue, false);
+});
+window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  let saved;
+  try { saved = localStorage.getItem(siteThemeStorageKey); } catch {}
+  if (!isSiteTheme(saved) && !isSiteTheme(new URLSearchParams(location.search).get('theme'))) setSiteTheme(readSiteTheme(), false);
+});
+
 const input = document.querySelector('#component-filter');
 if (input) {
   const items = [...document.querySelectorAll('.catalogue-item')];
@@ -45,17 +80,7 @@ for (const code of document.querySelectorAll('pre > code')) {
 
 // Browser code is fetched only after an explicit request to run a component.
 // One preference follows the reader between components and translations.
-const previewThemeStorageKey = 'slint-kit-preview-theme';
-const isPreviewTheme = value => value === 'light' || value === 'dark';
-const readPreviewTheme = () => {
-  const requested = new URLSearchParams(location.search).get('theme');
-  if (isPreviewTheme(requested)) return requested;
-  try { const saved = localStorage.getItem(previewThemeStorageKey); if (isPreviewTheme(saved)) return saved; } catch {}
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-};
-const savePreviewTheme = theme => {
-  try { localStorage.setItem(previewThemeStorageKey, theme); } catch {}
-};
+const isPreviewTheme = isSiteTheme;
 for (const preview of document.querySelectorAll('.live-preview')) {
   const button = preview.querySelector('.run-preview');
   const status = preview.querySelector('.preview-status');
@@ -68,22 +93,19 @@ for (const preview of document.querySelectorAll('.live-preview')) {
   const interactiveStatus = () => {
     status.textContent = (french ? 'Interactif — composants Slint en WebAssembly' : 'Interactive — Slint components in WebAssembly') + ' · ' + themeLabel(themeChoice.value);
   };
-  const applyTheme = (theme, persist = true, send = true) => {
+  const applyTheme = (theme, send = true) => {
     if (!isPreviewTheme(theme)) return;
     themeChoice.value = theme;
     host.dataset.theme = theme;
-    if (persist) savePreviewTheme(theme);
     if (frame && send) frame.contentWindow.postMessage({type:'slint-kit-theme', theme, requestId:++themeRequest}, location.origin);
     if (ready) interactiveStatus();
   };
   themeChoice.disabled = false;
-  applyTheme(readPreviewTheme(), false, false);
+  applyTheme(siteTheme, false);
+  themeSubscribers.push(theme => applyTheme(theme));
   themeChoice.addEventListener('change', () => {
-    applyTheme(themeChoice.value);
+    setSiteTheme(themeChoice.value);
     window.slintKitAnalytics?.track('preview_theme', {component_name:preview.dataset.component, theme:themeChoice.value});
-  });
-  window.addEventListener('storage', event => {
-    if (event.key === previewThemeStorageKey && isPreviewTheme(event.newValue)) applyTheme(event.newValue, false);
   });
   let width = Number(preview.dataset.width), height = Number(preview.dataset.height) + 30;
   const resize = () => {
@@ -131,7 +153,9 @@ for (const preview of document.querySelectorAll('.live-preview')) {
     }
     if (event.data.state === 'theme') {
       if (Number.isSafeInteger(event.data.requestId) && event.data.requestId !== themeRequest) return;
-      applyTheme(event.data.theme, true, false); return;
+      if (event.data.theme !== siteTheme) setSiteTheme(event.data.theme);
+      else applyTheme(siteTheme, false);
+      return;
     }
     if (event.data.state !== 'ready') return;
     clearTimeout(timeout); width = Number(event.data.width) || width; height = Number(event.data.height) || height;
@@ -140,7 +164,7 @@ for (const preview of document.querySelectorAll('.live-preview')) {
     ready = true;
     button.disabled = false; button.textContent = french ? 'Arrêter l’aperçu Slint' : 'Stop Slint preview';
     // Changes made while WASM was loading may predate the child listener.
-    applyTheme(themeChoice.value, false);
+    applyTheme(siteTheme);
   });
   new ResizeObserver(resize).observe(host);
 }

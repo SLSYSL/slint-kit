@@ -13,7 +13,7 @@ use std::{
 fn fixture() -> ChoicePresentationFixture {
     i_slint_backend_testing::init_no_event_loop();
     let window = ChoicePresentationFixture::new().unwrap();
-    kit_slint::init_form_validation!(ui, window);
+    kit_slint::install(&window);
     window.show().unwrap();
     window
 }
@@ -580,7 +580,7 @@ fn segmented_keyboard_activation_checks_the_live_row_and_fails_closed_without_in
         activations.borrow().is_empty(),
         "uninitialized bridge fails closed"
     );
-    kit_slint::init_form_validation!(ui, window);
+    kit_slint::install(&window);
     key(&window, Key::Return);
     assert_eq!(*activations.borrow(), [(31, 3)]);
     for token in [0, 999] {
@@ -626,7 +626,7 @@ fn segmented_grid_keeps_two_columns_and_token_icons_after_reordering() {
     })))
     .unwrap();
     let window = ChoicePresentationFixture::new().unwrap();
-    kit_slint::init_form_validation!(ui, window);
+    kit_slint::install(&window);
     window.show().unwrap();
     window.set_speed_width(320.);
 
@@ -777,7 +777,7 @@ fn selected_segment_focus_readonly_choices_and_custom_disabled_slider_paint_rend
     })))
     .unwrap();
     let window = ChoicePresentationFixture::new().unwrap();
-    kit_slint::init_form_validation!(ui, window);
+    kit_slint::install(&window);
     window.show().unwrap();
     let switches = Rc::new(Cell::new(0));
     let observed = switches.clone();

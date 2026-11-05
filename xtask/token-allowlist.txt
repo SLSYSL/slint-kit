@@ -104,7 +104,6 @@ display.slint | 650ms | interval: 650ms | behaviour: skeleton pulse period, long
 feedback.slint | 100ms | interval: 100ms | behaviour: spinner frame period
 
 # Application data offered as defaults.
-color.slint | #000000 | in property <color> swatch: #000000 | application data: default swatch until the host projects a color
 color.slint | #ef4444 | palette: [#ef4444, | application data: default picker palette
 color.slint | #f59e0b | #f59e0b, | application data: default picker palette
 color.slint | #22c55e | #22c55e, | application data: default picker palette

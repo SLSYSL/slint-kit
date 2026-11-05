@@ -8,7 +8,7 @@ permalink: "{{ 'guides/editor/' | localeUrl(locale) }}index.html"
 
 # Resolve `@kit` imports in your editor
 
-`slint-kit-build` registers `@kit` for Cargo compilation. The Slint language server does not read your `build.rs`, so configure its library paths separately to enable diagnostics, completion and navigation for imports such as `@kit/kit.slint`.
+`slint-kit-build` registers `@kit` for Cargo compilation. The Slint language server does not read your `build.rs`, so configure its library paths separately to enable diagnostics, completion and navigation for imports such as `@kit`.
 
 Use the Slint extension for your editor and a language server matching the application's Slint version (currently **1.18.1**).
 
@@ -63,7 +63,7 @@ Keep existing server arguments and add this `-L` pair. Zed starts the server in 
 
 ## Check and refresh
 
-Restart the Slint language server (or reload the editor), then open a `.slint` file that imports `KitButton` from `@kit/kit.slint`. The import should resolve, and Go to Definition should open the vendored component. Keep compiling with `slint_kit_build::compile` in `build.rs`; editor settings do not configure Cargo compilation.
+Restart the Slint language server (or reload the editor), then open a `.slint` file that imports `KitButton` from `@kit`. The import should resolve, and Go to Definition should open the vendored component. Keep compiling with `slint_kit_build::compile` in `build.rs`; editor settings do not configure Cargo compilation.
 
 Rerun the vendoring command after updating `Cargo.lock` or running `cargo clean`, which removes `target/`. Do not edit the vendored files: refresh them from the resolved dependency instead. You can commit the relative editor settings; `target/` remains generated and ignored by Git.
 

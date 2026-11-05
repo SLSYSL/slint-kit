@@ -168,4 +168,5 @@ if (typeof document !== 'undefined') {
     canvases.forEach(canvas=>observer.observe(canvas));
   } else canvases.forEach(paint);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>painted.forEach(paint));
+  window.addEventListener('slint-kit-theme-change',()=>painted.forEach(paint));
 }

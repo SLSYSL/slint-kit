@@ -59,10 +59,11 @@ test('workspace intent needs a trusted interaction on the ready canvas and count
 async function copyCode(succeeds) {
   const events = [], elements = [];
   const code = {className:'language-rust',textContent:'private code must never be sent',parentElement:{prepend() {}}};
-  const document = {querySelector:() => null,querySelectorAll:selector => selector === 'pre > code' ? [code] : [],documentElement:{lang:'en'},createElement() {
+  const document = {querySelector:() => null,querySelectorAll:selector => selector === 'pre > code' ? [code] : [],documentElement:{lang:'en',dataset:{}},createElement() {
     const element = {listeners:new Map(),setAttribute() {},append() {},addEventListener(name,handler) {this.listeners.set(name,handler);}}; elements.push(element); return element;
   }};
-  vm.runInNewContext(fs.readFileSync(new URL('../src/assets/site.js', import.meta.url),'utf8'),{document,window:{slintKitAnalytics:{track:(...args) => events.push(args)}},navigator:{clipboard:{async writeText() {if (!succeeds) throw Error('Permission denied');}}}});
+  const window = {slintKitAnalytics:{track:(...args) => events.push(args)},addEventListener() {},dispatchEvent() {},matchMedia:() => ({matches:false,addEventListener() {}})};
+  vm.runInNewContext(fs.readFileSync(new URL('../src/assets/site.js', import.meta.url),'utf8'),{document,window,location:new URL('https://slint-kit.test/'),URLSearchParams,CustomEvent:class {},localStorage:{getItem:() => null,setItem() {}},navigator:{clipboard:{async writeText() {if (!succeeds) throw Error('Permission denied');}}}});
   await elements.find(e => e.type === 'button').listeners.get('click')(); return JSON.parse(JSON.stringify(events));
 }
 test('a successful clipboard write records one copy and a denied write records none', async () => {

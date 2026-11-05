@@ -8,7 +8,7 @@ permalink: "{{ 'guides/editor/' | localeUrl(locale) }}index.html"
 
 # Résoudre les imports `@kit` dans l’éditeur
 
-`slint-kit-build` enregistre `@kit` pour la compilation Cargo. Le serveur de langage Slint ne lit pas votre `build.rs` : configurez séparément ses chemins de bibliothèques pour activer les diagnostics, la complétion et la navigation des imports comme `@kit/kit.slint`.
+`slint-kit-build` enregistre `@kit` pour la compilation Cargo. Le serveur de langage Slint ne lit pas votre `build.rs` : configurez séparément ses chemins de bibliothèques pour activer les diagnostics, la complétion et la navigation des imports comme `@kit`.
 
 Utilisez l’extension Slint de votre éditeur et un serveur de langage correspondant à la version Slint de l’application (actuellement **1.18.1**).
 
@@ -63,7 +63,7 @@ Conservez les arguments existants et ajoutez cette paire `-L`. Zed démarre le s
 
 ## Vérifier et actualiser
 
-Redémarrez le serveur de langage Slint ou rechargez l’éditeur, puis ouvrez un fichier `.slint` qui importe `KitButton` depuis `@kit/kit.slint`. L’import doit être résolu et Aller à la définition doit ouvrir le composant copié. Continuez de compiler avec `slint_kit_build::compile` dans `build.rs` : les réglages de l’éditeur ne configurent pas la compilation Cargo.
+Redémarrez le serveur de langage Slint ou rechargez l’éditeur, puis ouvrez un fichier `.slint` qui importe `KitButton` depuis `@kit`. L’import doit être résolu et Aller à la définition doit ouvrir le composant copié. Continuez de compiler avec `slint_kit_build::compile` dans `build.rs` : les réglages de l’éditeur ne configurent pas la compilation Cargo.
 
 Relancez la commande de vendoring après une mise à jour de `Cargo.lock` ou un `cargo clean`, qui supprime `target/`. Ne modifiez pas les fichiers copiés : actualisez-les depuis la dépendance résolue. Vous pouvez versionner les réglages relatifs de l’éditeur ; `target/` reste généré et ignoré par Git.
 

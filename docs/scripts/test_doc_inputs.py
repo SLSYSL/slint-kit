@@ -154,7 +154,7 @@ class DocumentationIdentityTests(unittest.TestCase):
             self.assertFalse(journal.exists())
 
     def test_overlay_poster_activation_reaches_the_browser_capture_driver(self):
-        task = {'id': 'starter:dialog', 'slug': 'dialog', 'outputs': [captures.ROOT / 'preview@2x.png'],
+        task = {'kind': captures.SceneKind.STARTER, 'id': 'starter:dialog', 'slug': 'dialog', 'outputs': [captures.ROOT / 'preview@2x.png'],
                 'sceneKey': 'scene', 'key': 'key', 'recipe': {'activation': [120, 80]}}
         scene = captures.browser_scene(task, {'base': '/assets/previews/dialog'})
         self.assertEqual(scene['activation'], {'action': 'click', 'point': [120, 80]})

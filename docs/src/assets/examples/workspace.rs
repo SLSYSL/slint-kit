@@ -273,7 +273,7 @@ pub fn install(window: &App) {
 
 pub fn create() -> Result<ui::App, slint::PlatformError> {
     let app = ui::App::new()?;
-    slint_kit::init_form_validation!(ui, app);
+    slint_kit::install(&app);
     install(&app);
     Ok(app)
 }

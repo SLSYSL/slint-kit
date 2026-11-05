@@ -12,6 +12,7 @@ class Element {
   }
   addEventListener(name, callback) { this.listeners.set(name, callback); }
   emit(name, event = {}) { this.listeners.get(name)?.(event); }
+  dispatchEvent(event) { this.emit(event.type, event); }
   setAttribute() {}
   append(child) { this.children.push(child); }
   remove() { this.removed = true; }
@@ -19,9 +20,10 @@ class Element {
 }
 const siteSource = fs.readFileSync(new URL('../src/assets/site.js', import.meta.url), 'utf8');
 const shellTemplate = fs.readFileSync(new URL('../src/preview.njk', import.meta.url), 'utf8');
-const storageKey = 'slint-kit-preview-theme';
-function environment({saved = null, search = '', dark = false, french = false, blockedStorage = false} = {}) {
+const storageKey = 'slint-kit-theme';
+function environment({saved = null, legacySaved = null, search = '', dark = false, french = false, blockedStorage = false} = {}) {
   const values = new Map(saved === null ? [] : [[storageKey, saved]]);
+  if (legacySaved !== null) values.set('slint-kit-preview-theme', legacySaved);
   const location = {origin:'https://slint-kit.test', pathname:'/preview/', search};
   const window = new Element();
   const analytics = [];
@@ -29,6 +31,7 @@ function environment({saved = null, search = '', dark = false, french = false, b
   const media = new Map();
   const context = {
     window, location, URLSearchParams, console,
+    CustomEvent:class {constructor(type, options) {this.type = type; this.detail = options.detail;}},
     navigator:{}, ResizeObserver:class {observe() {}},
     setTimeout() {return 1;}, clearTimeout() {},
     requestAnimationFrame(callback) {callback();},
@@ -47,11 +50,11 @@ function page(options) {
   const state = environment(options);
   const preview = new Element();
   preview.dataset = {component:'button', width:'520', height:'300'};
-  const elements = Object.fromEntries(['.run-preview','.preview-status','.preview-frame','.preview-theme','figure'].map(name => [name, new Element()]));
+  const elements = Object.fromEntries(['.run-preview','.preview-status','.preview-frame','.preview-theme','.site-theme','.dark-poster','figure'].map(name => [name, new Element()]));
   elements['.preview-theme'].disabled = true;
   preview.querySelector = name => elements[name];
-  state.context.document.querySelector = () => null;
-  state.context.document.querySelectorAll = name => name === '.live-preview' ? [preview] : [];
+  state.context.document.querySelector = name => name === '.site-theme' ? elements[name] : null;
+  state.context.document.querySelectorAll = name => name === '.live-preview' ? [preview] : name === '[data-theme-source="dark"]' ? [elements['.dark-poster']] : [];
   const frames = [];
   state.context.document.createElement = () => {
     const frame = new Element();
@@ -80,6 +83,26 @@ test('explicit theme wins, invalid values fall back, and blocked storage still w
   assert.equal(page({saved:'light', search:'?theme=dark'}).elements['.preview-theme'].value, 'dark');
   assert.equal(page({saved:'dark', search:'?theme=invalid'}).elements['.preview-theme'].value, 'dark');
   assert.equal(page({blockedStorage:true, dark:true}).elements['.preview-theme'].value, 'dark');
+});
+
+test('the page, poster and first demo frame share one theme despite an old preview preference', () => {
+  const state = page({legacySaved:'dark'});
+  assert.equal(state.context.document.documentElement.dataset.theme, 'light');
+  assert.equal(state.elements['.site-theme'].value, 'light');
+  assert.equal(state.elements['.site-theme'].disabled, false);
+  assert.equal(state.elements['.dark-poster'].media, 'not all');
+  state.elements['.run-preview'].emit('click');
+  assert.equal(new URL(state.frames[0].src, state.context.location.origin).searchParams.get('theme'), 'light');
+  const choice = state.elements['.site-theme'];
+  choice.value = 'dark'; choice.emit('change');
+  assert.equal(state.context.document.documentElement.dataset.theme, 'dark');
+  assert.equal(state.elements['.preview-theme'].value, 'dark');
+  assert.equal(state.elements['.dark-poster'].media, 'all');
+  assert.equal(state.frames.length, 1);
+  const request = state.frames[0].messages.at(-1).data;
+  assert.equal(request.theme, 'dark');
+  state.message({type:'slint-kit-preview', state:'theme', theme:'dark', requestId:request.requestId});
+  assert.equal(state.frames[0].messages.length, 1, 'an acknowledgement must not create a theme message loop');
 });
 
 test('theme changes survive loading and update the existing frame without restarting it', () => {

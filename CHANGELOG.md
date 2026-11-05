@@ -1,6 +1,32 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
+
+- Documentation uses one shared browser bundle for sequential component captures, including localized fixtures and dark posters. A visible light/dark selector keeps the page, poster and demo startup consistent; the typed example uses `Choices` and shared field conversions.
+
+- Add `KitSelectKeyboard.move-active` and `type-ahead` for custom navigation surfaces sharing one selection session. / Ajout des méthodes de navigation et de recherche par frappe pour les surfaces composées partageant une session de sélection.
+
+- **Breaking integration change:** shared Slint contracts are now compiled once in the kit using Slint 1.18.1's experimental module build. Import components/types/globals from `@kit`, build through `slint_kit_build::compile`, and keep the Cargo runtime dependency named `slint-kit`. Application-generated copies of kit types and imports through family files are no longer interchangeable with the canonical `slint_kit::ui` types. Supplemental icon and font imports retain their paths.
+- Call `slint_kit::install(&window)` once before showing each window. It installs HTML validation and the calendar, field, selection and time services. The `init_form_validation!` and `bind_select!` macros are documented as deprecated compatibility APIs for one migration cycle.
+- **Behavior change:** checkbox, switch, collapse and pagination accept local interaction state by default. Use `Ownership.controlled` when the host must acknowledge changes. Autonomous selectors, fields and temporal controls likewise expose explicit local/controlled ownership instead of requiring per-instance window callback names.
+- Calendars and date/range pickers own navigation, focused dates, bounds and projections, and emit `chosen` values. Multiple instances and windows remain independent. `Choices<K>` centralizes stable tokens, filtered selection and generation checks, including independent sources and multi-selection through `selections(&[K])`; radio/segmented arrows choose locally while disabled/read-only states retain their documented restrictions.
+- `FieldState`, `FieldSpec<T,E>` and typed `FieldCommit` centralize native draft/commit/blur/cancel handling and HTML constraints. Custom codecs are installed through `install_field_specs`; Rust acceptance checks remain required. Native caret, selection, undo and IME stay with Slint's editor; headless checks do not qualify OS IME or a screen reader.
+- `KeyedModel` supports stable-key sorting (`sort_by`/`sorting_by`) and active editor projections (`active_row`/`bind_active`/`update_active`).
+- Add `KeyedModel<K,Row>`, `ToastBinding<T>`, weak-window `action`/`event`/`event2`/`event3` handlers and native file/directory bindings. `native-winit` explicitly enables the winit file-drop bridge; unsupported, cancelled and failed requests remain distinct. Decimal sliders keep exact domain values and use floats only for renderer projection.
+- Every component quickstart now uses at most 15 Rust source lines, with no weak-window plumbing or UI-enum conversion. Component pages show Slint and business callbacks and link to bilingual Project setup; complete downloads retain Cargo, build and lock files. A source guard in `xtask check` enforces this contract. Use matching 0.7 runtime/build packages; source dependencies remain available for local development.
+
+### Français
+
+- La documentation utilise un bundle navigateur commun pour capturer successivement les composants, leurs fixtures localisées et leurs posters sombres. Un sélecteur jour/nuit visible synchronise page, poster et démarrage de la démo ; l’exemple typé utilise `Choices` et les conversions partagées des champs.
+
+- **Changement d’intégration cassant :** les contrats Slint sont compilés une seule fois dans le kit avec les modules expérimentaux de Slint 1.18.1. Importez composants/types/globals depuis `@kit`, compilez avec `slint_kit_build::compile` et gardez la dépendance Cargo nommée `slint-kit`. Les copies de types générées dans l’application et les imports de modules de famille ne sont plus interchangeables avec `slint_kit::ui`. Les imports supplémentaires de polices/icônes gardent leurs chemins.
+- Appelez `slint_kit::install(&window)` une fois avant l’affichage de chaque fenêtre. La validation HTML et les services calendrier/champ/sélection/temps sont installés ensemble. `init_form_validation!` et `bind_select!` restent des API de compatibilité, documentées comme dépréciées pour un cycle de migration.
+- **Changement de comportement :** checkbox, switch, collapse et pagination acceptent leur état local par défaut. Utilisez `Ownership.controlled` pour attendre l’acquittement de l’hôte. Sélecteurs, champs et contrôles temporels autonomes exposent leur propriété d’état au lieu d’imposer des noms de callbacks par instance sur la fenêtre.
+- Calendriers et sélecteurs de date/période possèdent navigation, focus, bornes et projections, et émettent `chosen`. Plusieurs instances et fenêtres restent indépendantes. `Choices<K>` centralise jetons stables, filtrage et générations, avec des sources indépendantes et `selections(&[K])` pour la sélection multiple ; les flèches des groupes radio/segments sélectionnent localement, avec les restrictions lecture seule/désactivé documentées.
+- `FieldState`, `FieldSpec<T,E>` et `FieldCommit` centralisent brouillon natif, validation, commit, blur et annulation. Les codecs personnalisés passent par `install_field_specs` ; l’acceptation Rust garde ses contraintes. Caret, sélection, undo et IME restent natifs ; les contrôles headless ne qualifient ni l’IME système ni un lecteur d’écran.
+- `KeyedModel` fournit le tri par clé stable (`sort_by`/`sorting_by`) et les projections de l’éditeur actif (`active_row`/`bind_active`/`update_active`).
+- Ajout de `KeyedModel<K,Row>`, `ToastBinding<T>`, des callbacks faibles `action`/`event`/`event2`/`event3` et des bindings natifs fichiers/répertoire. `native-winit` active explicitement le pont de dépôt winit ; absence de support, annulation et échec restent distincts. Les curseurs décimaux gardent des valeurs exactes, projetées en flottants seulement pour le rendu.
+- Chaque quickstart tient en 15 lignes de source Rust, sans plomberie de fenêtre faible ni conversion d’enum UI. Les fiches montrent Slint et les callbacks métier et pointent vers Configurer le projet en deux langues ; les téléchargements complets gardent Cargo, build et verrouillage. Le gate `xtask check` vérifie ce contrat. Utilisez des paquets runtime/build 0.7 correspondants ; les dépendances sources restent possibles en développement local.
 
 ## 0.6.1
 

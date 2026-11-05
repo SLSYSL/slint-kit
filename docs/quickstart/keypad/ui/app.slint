@@ -1,8 +1,8 @@
-export { KitThemeContext, KitThemes } from "@kit/kit.slint";
+
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { InterFont } from "@kit/fonts/inter.slint";
-export { KitFormValidation, HtmlInputKind, NumberInputFormat, KitInputConstraints, KitValidationResult, KitValidityState } from "@kit/kit.slint";
-import { KitKeypad, KitCodeIndicator, KitTheme, KitThemeContext, KitMetrics, TypographyRole } from "@kit/kit.slint";
+export { HtmlInputKind, NumberInputFormat, KitInputConstraints, KitValidationResult, KitValidityState } from "@kit";
+import { KitKeypad, KitCodeIndicator, KitTheme, KitThemeContext, KitMetrics, TypographyRole } from "@kit";
 export component App inherits Window {
     default-font-family: InterFont.family;
     default-font-size: KitMetrics.font-size(root.theme, TypographyRole.body);

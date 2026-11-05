@@ -46,6 +46,37 @@ class CatalogueCaptureTests(unittest.TestCase):
                                {'origin': {'capturedAt': '2026-11-04T20:00:00Z'}})
         return source, outputs
 
+    def test_runtime_recipe_keeps_locale_theme_scale_and_viewport_out_of_the_binary_route(self):
+        task = {'id': 'catalogue:button:fr:dark:2', 'kind': pipeline.SceneKind.CATALOGUE,
+                'slug': 'button', 'sceneKey': 'scene', 'key': 'render',
+                'outputs': [pipeline.ROOT / 'example.png'],
+                'recipe': {'locale': 'fr', 'theme': 'dark', 'textScale': 2, 'viewport': [1000, 1000]}}
+        scene = pipeline.browser_scene(task, {'base': '/shared-bundle'})
+        self.assertEqual(scene['recipe'], task['recipe'])
+        self.assertEqual(scene['kind'], 'catalogue')
+        self.assertEqual(scene['base'], '/shared-bundle')
+
+    def test_light_and_dark_starter_proofs_do_not_overwrite_each_other(self):
+        capture_file = self.docs / 'content/starter-captures.json'
+        capture_file.write_text('{}')
+        source = self.docs / 'quickstart/button'
+        source.mkdir(parents=True)
+        (source / 'main.rs').write_text('host')
+        for theme in ('dark', 'light', 'dark'):
+            suffix = '-dark' if theme == 'dark' else ''
+            image = source / f'preview{suffix}@2x.png'
+            image.write_bytes(png(4, 2))
+            task = {'kind': pipeline.SceneKind.STARTER, 'slug': 'button', 'key': theme,
+                    'outputs': [image], 'recipe': {'theme': theme}}
+            with patch('starter_sources.source_directory', return_value=source), \
+                 patch('starter_sources.source_files', return_value=['main.rs']):
+                pipeline.update_legacy(task, {'origin': {'environment': {'platform': 'test'}}})
+        proof = json.loads(capture_file.read_text())['button']
+        self.assertEqual(proof['theme'], 'light')
+        self.assertEqual(proof['image']['file'], 'preview@2x.png')
+        self.assertEqual(proof['dark']['theme'], 'dark')
+        self.assertEqual(proof['dark']['image']['file'], 'preview-dark@2x.png')
+
     def test_new_component_registers_both_locales_in_either_order(self):
         for order in [('en', 'fr'), ('fr', 'en')]:
             with self.subTest(order=order):
