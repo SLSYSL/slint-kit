@@ -18,7 +18,7 @@ The public documentation is [English at the site root](https://slint-kit.dev/) a
 - [Typed controller application](https://slint-kit.dev/guides/typed-example/): downloadable Cargo, build, Rust and Slint files, with callbacks connected.
 - [Controllers](https://slint-kit.dev/guides/controllers/), [themes and accessibility](https://slint-kit.dev/guides/themes/) and [native integration](https://slint-kit.dev/guides/native/): domain ownership, presentation and host services.
 
-For a registry consumer, inspect the source of its resolved package version when exact signatures matter; `cargo metadata --format-version 1` reports package manifest paths. The relative source links below are shortcuts when this skill lives in a toolkit checkout. If they are unavailable, use the installed package sources or the [published package source](https://docs.rs/crate/slint-kit-slint/0.7.0/source/). Keep runtime and build dependencies on the same `"0.7"` compatibility range.
+For a registry consumer, inspect the source of its resolved package version when exact signatures matter; `cargo metadata --format-version 1` reports package manifest paths. The relative source links below are shortcuts when this skill lives in a toolkit checkout. If they are unavailable, use the installed package sources or the [published package source](https://docs.rs/crate/slint-kit-slint/0.7.1/source/). Keep runtime and build dependencies on the same `"0.7"` compatibility range.
 
 ## Wire the consumer
 

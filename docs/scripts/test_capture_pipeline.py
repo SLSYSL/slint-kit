@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import json
+import io
 from pathlib import Path
 import struct
 import tempfile
+import tarfile
 import unittest
 from unittest.mock import patch
 import zlib
 
 import capture_pipeline as pipeline
+from doc_inputs import archived_runtime_inputs
 
 
 def png(width, height):
@@ -55,6 +58,52 @@ class CatalogueCaptureTests(unittest.TestCase):
         self.assertEqual(scene['recipe'], task['recipe'])
         self.assertEqual(scene['kind'], 'catalogue')
         self.assertEqual(scene['base'], '/shared-bundle')
+
+    def test_build_only_reuse_checks_archived_sources_and_keeps_capture_origin(self):
+        workspace = b'[workspace.package]\nversion="0.7.0"\n[workspace.dependencies]\n'
+        sources = {'Cargo.toml': workspace, 'Cargo.lock': b'package=[]\n',
+                   'crates/kit/Cargo.toml': b'[package]\nname="slint-kit"\nversion="0.7.0"\n',
+                   'crates/kit/src/lib.rs': b'pub fn runtime() {}',
+                   'crates/kit-build/src/lib.rs': b'pub fn compile() {}'}
+        (self.docs / 'Cargo.toml').write_bytes(workspace.replace(b'0.7.0', b'0.7.1'))
+        folder = self.docs / '.cache/preview-bundles/previous'
+        folder.mkdir(parents=True)
+        archive_path = folder / 'source.tar.gz'
+        with tarfile.open(archive_path, 'w:gz') as archive:
+            for name, content in sources.items():
+                entry = tarfile.TarInfo('slint-kit/' + name)
+                entry.size = len(content)
+                archive.addfile(entry, io.BytesIO(content))
+        component = {'source_sha256': {name: pipeline.digest(content) for name, content in sources.items()}}
+        (folder / 'component.json').write_text(json.dumps(component))
+        (folder / 'manifest.json').write_text(json.dumps({'assets': {
+            'source.tar.gz': pipeline.digest(archive_path.read_bytes()),
+            'component.json': pipeline.digest((folder / 'component.json').read_bytes())}}))
+        image = self.docs / 'capture.png'
+        image.write_bytes(png(4, 2))
+        before = {'id': 'scene', 'sceneKey': 'old', 'outputs': [image]}
+        after = {**before, 'sceneKey': 'new', 'key': pipeline.digest({'scene': 'new', 'profile': pipeline.BROWSER_PROFILE})}
+        origin = {'capturedAt': 'original timestamp', 'environment': {'sceneKey': 'old'}}
+        record = {'key': pipeline.digest({'scene': 'old', 'profile': pipeline.BROWSER_PROFILE}),
+                  'sceneKey': 'old', 'renderProfile': pipeline.BROWSER_PROFILE, 'origin': origin,
+                  'outputs': {'capture.png': {'sha256': pipeline.digest(image.read_bytes())}}}
+        runtime = archived_runtime_inputs({**sources, 'crates/kit-build/src/lib.rs': b'pub fn fixed_compile() {}'})
+        with patch.object(pipeline, 'ROOT', self.docs), patch.object(pipeline, 'runtime_inputs', return_value=runtime), \
+             patch.object(pipeline, 'tasks', return_value=[before]), patch.object(pipeline, 'update_legacy'), \
+             patch.object(pipeline, 'store'):
+            manifest = {'entries': {'scene': record}}
+            pipeline.reuse_build_only_changes([after], manifest, {})
+            self.assertEqual(manifest['entries']['scene']['key'], after['key'])
+            self.assertEqual(manifest['entries']['scene']['origin'], origin)
+            self.assertEqual(manifest['entries']['scene']['reuse']['previousKey'], record['key'])
+            runtime['rust']['crates/kit/src/lib.rs'] = 'changed runtime'
+            manifest = {'entries': {'scene': record}}
+            pipeline.reuse_build_only_changes([after], manifest, {})
+            self.assertEqual(manifest['entries']['scene'], record)
+            runtime['rust']['crates/kit/src/lib.rs'] = pipeline.digest(sources['crates/kit/src/lib.rs'])
+            archive_path.write_bytes(b'corrupted archive')
+            pipeline.reuse_build_only_changes([after], manifest, {})
+            self.assertEqual(manifest['entries']['scene'], record)
 
     def test_light_and_dark_starter_proofs_do_not_overwrite_each_other(self):
         capture_file = self.docs / 'content/starter-captures.json'

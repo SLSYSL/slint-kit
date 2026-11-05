@@ -10,8 +10,11 @@ from pathlib import Path
 import re
 import struct
 import subprocess
+import tarfile
+import tomllib
 
 from doc_inputs import DOCS, ROOT, build_inputs, digest, key_for, runtime_inputs, write_changed, write_json, consumer_identity, compiler_environment
+from doc_inputs import archived_runtime_inputs, rendering_runtime
 
 
 class SceneKind(StrEnum):
@@ -120,9 +123,9 @@ def valid_record(task, record):
     return True
 
 
-def tasks(inputs):
+def tasks(inputs, runtime=None):
     old = json.loads((DOCS / 'content/captures.json').read_text())
-    shared = {'runtime': digest(runtime_inputs()), 'driver': 'documentation-scene-v1'}
+    shared = {'runtime': digest(runtime_inputs() if runtime is None else runtime), 'driver': 'documentation-scene-v1'}
     result = []
     for source in sorted((DOCS / 'examples').glob('*.slint')):
         slug = source.stem
@@ -167,6 +170,69 @@ def tasks(inputs):
         task['sceneKey'] = task['key']
         task['key'] = digest({'scene': task['sceneKey'], 'profile': BROWSER_PROFILE})
     return result
+
+
+def reuse_build_only_changes(work, manifest, inputs):
+    """Retain original capture provenance after proving rendering inputs equal."""
+    current = runtime_inputs()
+    workspace = tomllib.loads((ROOT / 'Cargo.toml').read_text())
+
+    def build_independent_workspace(value):
+        value = json.loads(json.dumps(value))
+        value['workspace']['package'].pop('version', None)
+        for name, dependency in value['workspace']['dependencies'].items():
+            if name.startswith('kit-') or name == 'slint-kit':
+                dependency.pop('version', None)
+        return value
+
+    for folder in sorted((DOCS / '.cache/preview-bundles').glob('*')):
+        try:
+            proof = json.loads((folder / 'manifest.json').read_text())
+            archive_path = folder / 'source.tar.gz'
+            if proof['assets']['source.tar.gz'] != digest(archive_path.read_bytes()):
+                continue
+            if proof['assets']['component.json'] != digest((folder / 'component.json').read_bytes()):
+                continue
+            component = json.loads((folder / 'component.json').read_text())
+            checksums = component['source_sha256']
+            with tarfile.open(archive_path, 'r:gz') as archive:
+                sources = {entry.name.removeprefix('slint-kit/'): archive.extractfile(entry).read()
+                           for entry in archive if entry.isfile()}
+            if digest(sources['Cargo.toml']) != checksums['Cargo.toml']:
+                # The source packager removes applications absent from the tar.
+                # Restore that exact projection and verify its original hash.
+                suffix = b', "showcase", "tests", "xtask", "docs/capture", "docs/integration"'
+                sources['Cargo.toml'] = re.sub(rb'(?m)^(members = \[.*)(\])$',
+                                               lambda match: match[1] + suffix + match[2],
+                                               sources['Cargo.toml'], count=1)
+            if set(sources) != set(checksums) or any(digest(content) != checksums[name] for name, content in sources.items()):
+                continue
+            previous = archived_runtime_inputs(sources)
+            if rendering_runtime(previous) != rendering_runtime(current):
+                continue
+            # A package-version-sensitive runtime must be rebuilt and captured.
+            if any(b'CARGO_PKG_VERSION' in content for name, content in sources.items()
+                   if name in rendering_runtime(previous)['rust']):
+                continue
+            if build_independent_workspace(tomllib.loads(sources['Cargo.toml'].decode())) != build_independent_workspace(workspace):
+                continue
+        except (OSError, ValueError, KeyError, TypeError, tarfile.TarError):
+            continue
+        before = {task['id']: task for task in tasks(inputs, previous)}
+        reused = 0
+        for task in work:
+            record = manifest['entries'].get(task['id'])
+            if valid_record(task, record) or not valid_record(before[task['id']], record):
+                continue
+            record = {**record, 'key': task['key'], 'sceneKey': task['sceneKey'],
+                      'reuse': {'method': 'unchanged-rendering-inputs', 'previousKey': record['key'],
+                                'sourceArchiveSha256': proof['assets']['source.tar.gz']}}
+            manifest['entries'][task['id']] = record
+            update_legacy(task, record)
+            store(task, record)
+            reused += 1
+        if reused:
+            print(f'Capture cache: {reused} scenes reused after verified build-only/version changes; original provenance retained', flush=True)
 
 
 def read_manifest():
@@ -375,6 +441,7 @@ def main():
     manifest = read_manifest()
     if args.action == 'update':
         migrate_catalogue(work, manifest)
+        reuse_build_only_changes(work, manifest, inputs)
         for task in work:
             if not valid_record(task, manifest['entries'].get(task['id'])):
                 if record_browser_capture(task, manifest):
