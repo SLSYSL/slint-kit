@@ -13,6 +13,7 @@ concurrency:
 env:
   CARGO_INCREMENTAL: '0'
   CARGO_TERM_COLOR: always
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target
 
 jobs:
   publish:
@@ -31,6 +32,9 @@ jobs:
         with:
           python-version: '3.12'
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: slint-kit-workspace
+          cache-workspace-crates: true
       - name: Check release safeguards
         run: python3 -B -m unittest discover -s .github/scripts -p 'test_release.py'
       - name: Validate release tag and versions

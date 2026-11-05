@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_TERM_COLOR: always
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target
 jobs:
   windows:
     runs-on: windows-2025
@@ -17,7 +21,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.99.1
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: 'true'
+          cache-on-failure: true
+          cache-workspace-crates: true
       - name: Check public build helper on Windows
         run: cargo check -p kit-tests --locked
       - name: Test build helper path handling
@@ -30,6 +35,9 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: slint-kit-workspace
+          cache-workspace-crates: true
       - run: cargo run -p xtask --locked -- check
       - name: Check component starters against the local kit
         env:
