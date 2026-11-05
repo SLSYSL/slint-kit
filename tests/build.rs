@@ -11,6 +11,8 @@ fn main() {
         expected,
         "workspace tests must use this checkout's UI; isolate Cargo target directories between checkouts"
     );
+    kit_build::compile("ui/build-consumer.slint")
+        .expect("public build helper compiles a minimal consumer");
     for (path, diagnostic) in [
         ("ui/invalid-property.slint", "unknown-domain-value"),
         ("ui/invalid-enum.slint", "unknown-domain-value"),

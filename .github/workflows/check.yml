@@ -7,6 +7,19 @@ on:
 permissions:
   contents: read
 jobs:
+  windows:
+    runs-on: windows-2025
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
+      CARGO_BUILD_JOBS: '4'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+      - name: Check public build helper on Windows
+        run: cargo check -p kit-tests --locked
+      - name: Test build helper path handling
+        run: cargo test -p slint-kit-build --locked
   desktop:
     runs-on: macos-latest
     steps:
