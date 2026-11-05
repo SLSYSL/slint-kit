@@ -8,10 +8,10 @@
     2
   ],
   "sources": {
-    "Cargo.toml": "53abaeb44e95e181e027553853bae9be6ef437fb427669216f41caa206f998b6",
+    "Cargo.toml": "0b6baa15ede9b105983888ae282300eaab89bb1228235eb70bcc176702e1952c",
     "build.rs": "fb5e64ba44fa470b88c7ed61d4f98846d91372816e5dd85fede6471c8b79afd2",
-    "ui/table.slint": "582fd829c4ce6db6272009c6793c60e8eb3105ce999d108c3e56044228549c07",
-    "src/main.rs": "d8714553d227c9503cdf26948f200a0e83b3019365536cc2dbb0e61e7a06b8bd"
+    "ui/table.slint": "17d5f6d9031600f6582118903b9c33a04e31e314d3c352fc5b9c05f69414d741",
+    "src/main.rs": "3de2d7f76c2de2edb467d25e6a355372a42bb56b889e941736ebf233486e1b3d"
   },
   "captures": {
     "en": {

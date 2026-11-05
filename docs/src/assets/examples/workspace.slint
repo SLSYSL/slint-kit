@@ -289,7 +289,7 @@ export component ProductWorkspace inherits Rectangle {
 
 // Complete entry point. Initialize form validation once in the Rust host.
 import { KitThemes, KitFormValidation, HtmlInputKind, NumberInputFormat, KitInputConstraints, KitValidationResult, KitValidityState } from "@kit";
-export { KitFormValidation, HtmlInputKind, NumberInputFormat, KitInputConstraints, KitValidationResult, KitValidityState }
+export { HtmlInputKind, NumberInputFormat, KitInputConstraints, KitValidationResult, KitValidityState }
 export component App inherits Window {
     default-font-family: InterFont.family;
     out property <KitTheme> light-theme: KitThemes.light;

@@ -4,9 +4,10 @@ pub mod ui {
     slint::include_modules!();
 }
 use slint::{ComponentHandle, Model, SharedString};
+use slint_kit::ui::SelectionRef;
 use slint_kit::{HtmlConstraints, HtmlInputKind, HtmlInputState};
 use std::{cell::RefCell, rc::Rc, time::Duration};
-use ui::{App, EditorStatus, ProjectFilter, SelectionRef, WorkspaceDraft, WorkspaceProject};
+use ui::{App, EditorStatus, ProjectFilter, WorkspaceDraft, WorkspaceProject};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct ProjectId(i32);
