@@ -4,6 +4,8 @@
 
 Rust owns validated values and stable identity; Slint owns presentation and native interaction (caret, selection, undo, IME).
 
+Build **desktop and mobile Rust applications**: macOS, Windows and Linux, plus Android and iOS through Slint's mobile backends. See [platform setup and limits](https://slint-kit.dev/guides/project-setup/#desktop-and-mobile-targets).
+
 <p>
   <img alt="Virtualized data table" src="https://slint-kit.dev/assets/components/data-table@2x.png" width="32%">
   <img alt="Calendar in dark theme" src="https://slint-kit.dev/assets/components/calendar-dark@2x.png" width="32%">
@@ -51,11 +53,11 @@ Use `slint_kit` in Rust for strict domain values, `Choices<K>`, `FieldSpec<T,E>`
 
 ## Quality
 
-No `unsafe` in the kit's hand-written Rust. CI runs `cargo fmt`, `clippy` with warnings denied, about 400 behavior tests (keyboard, pointer, focus, identity, geometry), generated-file verification and a lint that rejects hard-coded design values.
+No `unsafe` in the kit's hand-written Rust. [CI](https://github.com/damione1/slint-kit/actions/workflows/check.yml) runs `cargo fmt`, `clippy` with warnings denied, behavior tests (keyboard, pointer, focus, identity, geometry), generated-file verification and a lint that rejects hard-coded design values. Native text editing and accessibility still need verification on each target device.
 
 ## Requirements
 
-Rust 1.92 or later and Slint 1.18 (patch releases from 1.18.1). Desktop platforms: macOS, Windows and Linux. [Source, showcase and bilingual documentation](https://github.com/damione1/slint-kit).
+Rust 1.92 or later and Slint 1.18 (patch releases from 1.18.1). Android builds need the Android SDK/NDK; iOS builds need macOS and Xcode. Optional `native` file/directory dialogs are desktop services and return `SelectionOutcome::Failed(HostError::Unsupported)` on mobile. [Source, showcase and bilingual documentation](https://github.com/damione1/slint-kit).
 
 ## License
 

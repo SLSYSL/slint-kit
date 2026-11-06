@@ -2,11 +2,15 @@
 
 ## Unreleased
 
+- Present desktop and mobile Rust UI use cases consistently across GitHub, crates.io, docs.rs and the bilingual site. Document Android/iOS setup, desktop-only file dialogs and device qualification limits; clarify quality evidence and verify the generated AI documentation index.
+
 - Slint requirement relaxed from `=1.18.1` to `~1.18.1`: applications can use any Slint 1.18 patch release from 1.18.1. Keep `slint-kit` and `slint-kit-build` on the same release. No public API changes.
 - The documentation site publishes `/llms.txt`, generated from the component inventory, for AI assistants and search tools.
 - README, crates.io page, docs.rs crate documentation and crate metadata now present the component catalogue, screenshots, engineering guarantees and licensing plans.
 
 ### Français
+
+- Présente les usages UI Rust de bureau et mobiles sur GitHub, crates.io, docs.rs et le site bilingue. Documente la configuration Android/iOS, les sélecteurs de fichiers réservés au bureau et les limites de qualification ; précise les preuves de qualité et vérifie l’index généré pour les assistants IA.
 
 - L’exigence Slint passe de `=1.18.1` à `~1.18.1` : les applications peuvent utiliser toute version corrective de Slint 1.18 à partir de 1.18.1. Gardez `slint-kit` et `slint-kit-build` sur la même version. Aucun changement d’API publique.
 - Le site de documentation publie `/llms.txt`, généré à partir de l’inventaire des composants, pour les assistants IA et les outils de recherche.

@@ -8,6 +8,10 @@
 //! Rust owns validated values and stable identity; Slint owns presentation and
 //! native interaction (caret, selection, undo, IME).
 //!
+//! Build desktop Rust applications for macOS, Windows and Linux, or mobile
+//! applications for Android and iOS through Slint's mobile backends. See
+//! [platform setup and limits](https://slint-kit.dev/guides/project-setup/#desktop-and-mobile-targets).
+//!
 //! **[Browse all components](https://slint-kit.dev/components/)** ·
 //! [Getting started](https://slint-kit.dev/guides/getting-started/) ·
 //! [Forms guide](https://slint-kit.dev/guides/forms/)
@@ -40,7 +44,10 @@
 //! - `KeyedModel<K, Row>`: models with stable-key sorting and active-row editing.
 //!
 //! Enable the `native` feature for asynchronous file and directory dialogs, or
-//! `native-winit` for the winit file-drop bridge.
+//! `native-winit` for the winit file-drop bridge. File and directory dialogs
+//! return `SelectionOutcome::Failed(HostError::Unsupported)` on Android and iOS;
+//! native editing and accessibility
+//! require verification on the target device.
 //!
 //! Custom skins compose the same public primitives. See the
 //! [themes guide](https://slint-kit.dev/guides/themes/).

@@ -10,7 +10,7 @@ homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
 readme = "README.md"
-description = "125+ native Slint UI components for Rust: typed forms and validation, virtualized tables, date pickers, dialogs and light/dark themes"
+description = "Rust GUI components for desktop and mobile with Slint: typed forms, virtualized tables, date pickers and light/dark themes"
 
 include = ["build.rs", "src/**", "Cargo.toml", "README.md", "LICENSE", "THIRD-PARTY-NOTICES.md"]
 

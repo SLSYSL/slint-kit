@@ -4,9 +4,11 @@
 <img src="assets/branding/slint-kit-stacked.svg#gh-light-mode-only" alt="Slint Kit" width="240">
 <img src="assets/branding/slint-kit-stacked-dark.svg#gh-dark-mode-only" alt="Slint Kit" width="240">
 
+<h1>Slint Kit</h1>
+
 <p><strong>Native components. Your visual language.</strong></p>
 
-<p>A composable Rust and Slint toolkit with typed behavior, native text editing,<br>and a Tailwind-inspired presentation you can shape around your application.</p>
+<p>A Rust GUI component library for desktop and mobile apps built with Slint.<br>Typed forms, native text editing and customizable light/dark themes.</p>
 
 <p>
   <a href="https://github.com/damione1/slint-kit/actions/workflows/check.yml"><img alt="Kit checks on main" src="https://github.com/damione1/slint-kit/actions/workflows/check.yml/badge.svg?branch=main"></a>
@@ -15,7 +17,7 @@
   <img alt="Rust 1.92 or later" src="https://img.shields.io/badge/Rust-1.92%2B-B7410E?logo=rust&amp;logoColor=white">
   <a href="https://slint.dev"><img alt="Slint 1.18.1" src="https://img.shields.io/badge/Slint-1.18.1-818CF8"></a>
   <img alt="Native UI" src="https://img.shields.io/badge/UI-native-0D9488">
-  <img alt="No unsafe code" src="https://img.shields.io/badge/unsafe-none-success">
+  <img alt="No unsafe code in the kit's hand-written Rust" src="https://img.shields.io/badge/kit_unsafe-none-success">
   <a href="https://docs.rs/slint-kit"><img alt="docs.rs" src="https://img.shields.io/docsrs/slint-kit"></a>
 </p>
 
@@ -55,6 +57,10 @@ Buttons, fields, selections, dialogs, calendars, virtualized data views and comp
 
 [Website](https://slint-kit.dev/) · [Documentation](https://slint-kit.dev/guides/getting-started/) · [Components](https://slint-kit.dev/components/) · [docs.rs](https://docs.rs/slint-kit)
 
+## Desktop and mobile
+
+Build Rust interfaces for **macOS, Windows and Linux**, and reuse Slint Kit components in **Android and iOS** applications through Slint's mobile backends. Android uses `backend-android-activity-06`; iOS uses winit and Skia, with Xcode for packaging. See [mobile project setup](https://slint-kit.dev/guides/project-setup/#desktop-and-mobile-targets) for prerequisites and platform limits.
+
 ## Why Slint Kit
 
 Slint ships a solid set of standard widgets. Slint Kit adds what business applications need on top of them:
@@ -71,10 +77,10 @@ Every change passes `cargo run -p xtask -- check` in CI:
 
 - No `unsafe` in the kit's hand-written Rust; the domain core and adapters use `#![forbid(unsafe_code)]`.
 - `cargo fmt` and `clippy` with warnings denied; wildcard match arms on domain enums are rejected.
-- About 400 tests covering keyboard, pointer, focus, identity and geometry behavior, plus domain logic.
+- Behavior tests cover keyboard, pointer, focus, identity and geometry, alongside domain logic. See the [CI results](https://github.com/damione1/slint-kit/actions/workflows/check.yml).
 - Generated files (shared contracts, Lucide icons) are verified against their generators.
 - A token lint rejects hard-coded colors, sizes and durations in components: everything comes from the theme.
-- Strict types: closed sets are enums, identifiers are newtypes, invalid states are unrepresentable. See [AGENTS.md](AGENTS.md) for the full rules that apply to every change, human or agent-assisted.
+- Strict types: closed sets are enums, identifiers are newtypes, invalid states are unrepresentable. See the [typed controllers guide](https://slint-kit.dev/guides/controllers/) for application examples.
 
 ## Try it
 
