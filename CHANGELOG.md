@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.2
+
 - Present desktop and mobile Rust UI use cases consistently across GitHub, crates.io, docs.rs and the bilingual site. Document Android/iOS setup, desktop-only file dialogs and device qualification limits; clarify quality evidence and verify the generated AI documentation index.
 
 - Slint requirement relaxed from `=1.18.1` to `~1.18.1`: applications can use any Slint 1.18 patch release from 1.18.1. Keep `slint-kit` and `slint-kit-build` on the same release. No public API changes.
