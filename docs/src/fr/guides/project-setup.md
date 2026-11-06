@@ -53,7 +53,7 @@ Les composants Slint Kit peuvent servir dans des applications Rust de bureau et 
 | Android | Activez la feature Slint `backend-android-activity-06`, compilez l’application en `cdylib` et appelez `slint::android::init(app)` dans `android_main` avant de créer la fenêtre. Installez les SDK/NDK Android et une cible Rust Android ; suivez le [guide Android de Slint](https://docs.slint.dev/latest/docs/slint/guide/platforms/mobile/android/) pour créer l’APK. |
 | iOS | Utilisez winit et Skia avec les cibles Rust pour appareil et simulateur iOS. La compilation et l’empaquetage nécessitent macOS et Xcode ; le [guide iOS de Slint](https://docs.slint.dev/latest/docs/slint/guide/platforms/mobile/ios/) détaille le point d’entrée, le projet Xcode et la signature. |
 
-Les projets téléchargeables utilisent des points d’entrée et manifestes de bureau ; adaptez-les avec le guide de la plateforme avant de compiler pour mobile. Pour les correctifs, `~{{ project.slint }}` accepte les versions compatibles de Slint 1.18 ; les paquets d’exécution et de compilation du kit doivent toujours correspondre.
+Les projets téléchargeables utilisent des points d’entrée et manifestes de bureau ; adaptez-les avec le guide de la plateforme avant de compiler pour mobile.
 
 Sur mobile, adaptez la mise en page, les cibles tactiles, le défilement, les zones sûres et le clavier virtuel en suivant les [conseils mobiles de Slint](https://docs.slint.dev/latest/docs/slint/guide/platforms/mobile/general/). Les sélecteurs de fichiers/répertoires de la feature optionnelle `native` renvoient `SelectionOutcome::Failed(HostError::Unsupported)` sur Android et iOS ; prévoyez une intégration de plateforme dans l’application si ces services sont nécessaires.
 

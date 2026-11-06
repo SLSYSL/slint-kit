@@ -53,7 +53,7 @@ Slint Kit components can be used in desktop and mobile Rust applications. Select
 | Android | Enable Slint's `backend-android-activity-06` feature, build the application as a `cdylib` and initialize `slint::android::init(app)` in `android_main` before creating the window. Install the Android SDK/NDK and a Rust Android target; follow the [Slint Android guide](https://docs.slint.dev/latest/docs/slint/guide/platforms/mobile/android/) for APK packaging. |
 | iOS | Use winit and Skia with the Rust iOS device/simulator targets. Building and packaging require macOS and Xcode; follow the [Slint iOS guide](https://docs.slint.dev/latest/docs/slint/guide/platforms/mobile/ios/) for the application entry point, Xcode project and signing. |
 
-The downloadable starters use desktop entry points and manifests; adapt them using the platform guide before building for mobile. For patch updates, `~{{ project.slint }}` accepts compatible Slint 1.18 releases; the kit runtime and build packages must still match.
+The downloadable starters use desktop entry points and manifests; adapt them using the platform guide before building for mobile.
 
 On mobile, adapt layouts, touch targets, scrolling, safe areas and the virtual keyboard using [Slint's mobile guidance](https://docs.slint.dev/latest/docs/slint/guide/platforms/mobile/general/). The kit's optional `native` file/directory dialogs return `SelectionOutcome::Failed(HostError::Unsupported)` on Android and iOS; use an application platform integration if those services are needed.
 
