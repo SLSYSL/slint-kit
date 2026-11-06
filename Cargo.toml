@@ -10,7 +10,7 @@ rust-version = "1.92"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/damione1/slint-kit"
 homepage = "https://slint-kit.dev"
-keywords = ["slint", "gui", "widgets", "native", "toolkit"]
+keywords = ["slint", "gui", "ui", "widgets", "forms"]
 categories = ["gui"]
 
 [workspace.dependencies]
@@ -19,8 +19,8 @@ kit-slint = { package = "slint-kit-slint", path = "crates/kit-slint", version = 
 kit-build = { package = "slint-kit-build", path = "crates/kit-build", version = "=0.7.1" }
 kit-native = { package = "slint-kit-native", path = "crates/kit-native", version = "=0.7.1" }
 slint-kit = { package = "slint-kit", path = "crates/kit", version = "=0.7.1" }
-slint = { version = "=1.18.1", default-features = false, features = ["std", "compat-1-18", "accessibility"] }
-slint-build = "=1.18.1"
+slint = { version = "~1.18.1", default-features = false, features = ["std", "compat-1-18", "accessibility"] }
+slint-build = "~1.18.1"
 
 [workspace.lints.clippy]
 wildcard_enum_match_arm = "deny"
